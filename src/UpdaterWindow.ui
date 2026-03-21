@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>updaterWindow</class>
  <widget class="QWidget" name="updaterWindow">
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>RP Soundboard Updater</string>
+   <string>Pulse Deck TS3 Updater</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -72,3 +72,4 @@
  <resources/>
  <connections/>
 </ui>
+

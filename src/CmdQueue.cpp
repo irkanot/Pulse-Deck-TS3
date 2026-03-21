@@ -1,9 +1,9 @@
-// src/CmdQueue.cpp
+﻿// src/CmdQueue.cpp
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2016 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2016 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 
@@ -58,3 +58,4 @@ void CmdQueue::threadFunc()
 		}
 	}
 }
+

@@ -1,9 +1,9 @@
-// src/UpdaterWindow.h
+﻿// src/UpdaterWindow.h
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2015 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2015 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 #pragma once
@@ -58,3 +58,4 @@ class UpdaterWindow : public QDialog
 	bool m_canceled;
 	bool m_success;
 };
+

@@ -1,9 +1,9 @@
-// src/peakmeter.h
+﻿// src/peakmeter.h
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2017 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2017 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 #pragma once
@@ -66,3 +66,4 @@ class PeakMeter
 	float output;
 	int timer;
 };
+

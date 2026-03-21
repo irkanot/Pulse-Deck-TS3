@@ -1,9 +1,9 @@
-// src/MainWindow.cpp
+﻿// src/MainWindow.cpp
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2015 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2015 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 #include "common.h"
@@ -116,17 +116,17 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 
 	createButtons();
 
-	m_playlistPrevButton = new QPushButton("⏮", this);
+	m_playlistPrevButton = new QPushButton("â®", this);
 	m_playlistPrevButton->setToolTip("Previous track");
-	m_playlistNextButton = new QPushButton("⏭", this);
+	m_playlistNextButton = new QPushButton("â­", this);
 	m_playlistNextButton->setToolTip("Next track");
-	m_playlistStartButton = new QPushButton("▶ Playlist", this);
+	m_playlistStartButton = new QPushButton("â–¶ Playlist", this);
 	m_playlistStartButton->setToolTip("Start playlist");
 	m_playlistRandomButton = new QPushButton("Random OFF", this);
 	m_playlistRandomButton->setToolTip("Toggle random mode (no repeat until all tracks played)");
-	m_playlistAddButton = new QPushButton("＋ Files", this);
+	m_playlistAddButton = new QPushButton("ï¼‹ Files", this);
 	m_playlistAddButton->setToolTip("Add one or more songs to playlist");
-	m_playlistRemoveButton = new QPushButton("－ Remove", this);
+	m_playlistRemoveButton = new QPushButton("ï¼ Remove", this);
 	m_playlistRemoveButton->setToolTip("Remove selected songs from playlist");
 	m_openButtonBoxButton = new QPushButton("ButtonBox", this);
 	m_openButtonBoxButton->setToolTip("Open detached ButtonBox window");
@@ -627,7 +627,7 @@ void MainWindow::refreshPlaylistUi()
 		m_playlistNowLabel->setText("Now: -");
 		m_playlistNextLabel->setText("Next: -");
 		if (m_playlistStartButton)
-			m_playlistStartButton->setText("▶ Playlist");
+			m_playlistStartButton->setText("â–¶ Playlist");
 		return;
 	}
 
@@ -641,7 +641,7 @@ void MainWindow::refreshPlaylistUi()
 	if (m_playlistView)
 		m_playlistView->setCurrentRow(m_playlistCurrentPos);
 	if (m_playlistStartButton)
-		m_playlistStartButton->setText(m_playlistRunning ? "■ Playlist" : "▶ Playlist");
+		m_playlistStartButton->setText(m_playlistRunning ? "â–  Playlist" : "â–¶ Playlist");
 	if (m_playlistRandomButton)
 		m_playlistRandomButton->setText(m_playlistRandomMode ? "Random ON" : "Random OFF");
 }
@@ -1528,3 +1528,4 @@ void MainWindow::ModelObserver::notify(ConfigModel& model, ConfigModel::notifica
 		break;
 	}
 }
+

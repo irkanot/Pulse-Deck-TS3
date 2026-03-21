@@ -1,9 +1,9 @@
-// src/UpdaterWindow.cpp
+﻿// src/UpdaterWindow.cpp
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2015 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2015 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 
@@ -66,7 +66,7 @@ void UpdaterWindow::startDownload(const QUrl& url, const QFileInfo& fileInfo, bo
 void UpdaterWindow::startRequest(const QUrl& url)
 {
 	QNetworkRequest request(url);
-	request.setRawHeader("User-Agent", QByteArray("RP Soundboard Updater, ") + buildinfo_getPluginVersion());
+	request.setRawHeader("User-Agent", QByteArray("Pulse Deck TS3 Updater, ") + buildinfo_getPluginVersion());
 	m_reply = m_manager->get(QNetworkRequest(url));
 	connect(m_reply, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
 	connect(m_reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(onDownloadProgress(qint64, qint64)));
@@ -182,3 +182,4 @@ void UpdaterWindow::onClickedCancel(QAbstractButton*)
 		m_reply->abort();
 	}
 }
+

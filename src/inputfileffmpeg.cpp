@@ -1,9 +1,9 @@
-// src/inputfileffmpeg.cpp
+﻿// src/inputfileffmpeg.cpp
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2015 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2015 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 #include "common.h"
@@ -495,3 +495,4 @@ InputFile* CreateInputFileFFmpeg(InputFileOptions options /*= InputFileOptions()
 {
 	return new InputFileFFmpeg(options);
 }
+
