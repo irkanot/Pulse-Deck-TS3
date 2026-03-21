@@ -91,6 +91,43 @@ If `RPSB_MAKE_PLUGIN_FILE=ON` is enabled, a `.ts3_plugin` package is generated i
 
 ---
 
+## Install on TeamSpeak 3 (Windows)
+
+### Method A (recommended): install from `.ts3_plugin`
+
+1. Download the latest package from Releases:
+   - `pulse_deck_ts3_<version>.ts3_plugin`
+2. Double-click the `.ts3_plugin` file.
+3. Confirm the plugin installation dialog in TeamSpeak installer.
+4. Start (or restart) TeamSpeak 3.
+5. Open:
+   - `Tools` -> `Options` -> `Addons`
+6. Ensure **Pulse Deck TS3** is enabled.
+7. Open plugin UI from the TeamSpeak Plugins/Addons menu.
+
+### Method B: manual install (if double-click does not work)
+
+1. Rename/copy the `.ts3_plugin` as `.zip` (or open it directly with an archive tool).
+2. Extract package contents.
+3. Copy files into your TeamSpeak user folder (typically `%AppData%\TS3Client\`), preserving structure:
+   - `plugins\pulse_deck_ts3_win64.dll`
+   - `plugins\pulse_deck_ts3\...` (assets)
+   - `package.ini`
+4. Restart TeamSpeak 3.
+5. Check in `Tools` -> `Options` -> `Addons` that plugin is enabled.
+
+### Troubleshooting
+
+- Plugin not visible:
+  - verify files are in the correct `%AppData%\TS3Client` path
+  - restart TeamSpeak fully
+- Plugin disabled at startup:
+  - re-enable in Addons and restart
+- Update prompt installs wrong version:
+  - confirm release asset version name and internal plugin version match
+
+---
+
 ## License / attribution
 
 This project includes and builds upon prior open-source work and uses FFmpeg components under their respective licenses.
