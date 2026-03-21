@@ -1,5 +1,7 @@
 # Pulse Deck TS3
 
+> This project is built entirely using **OpenClaw** and **ChatGPT**.
+
 **Pulse Deck TS3** is a standalone TeamSpeak 3 soundboard project focused on:
 
 - playlist-first music workflow,
