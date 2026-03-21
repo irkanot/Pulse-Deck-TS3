@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2023 Marius Gräfe
+# Pulse Deck TS3 version helper
 # Script to generate version.h from git output
 
 
