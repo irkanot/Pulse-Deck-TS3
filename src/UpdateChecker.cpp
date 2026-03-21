@@ -1,9 +1,9 @@
-// src/UpdateChecker.cpp
+﻿// src/UpdateChecker.cpp
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2015 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2015 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 
@@ -16,9 +16,9 @@
 //   <product descVersion="1" name="rp_soundboard">
 //     <latestVersion>1101</latestVersion>
 //     <latestDownload>
-//       <url>http://mgraefe.de/rpsb/dl/rp_soundboard_1101.ts3_plugin</url>
+//       <url>https://github.com/irkanot/Pulse-Deck-TS3/releases</url>
 //     </latestDownload>
-//	   <featureUrl>http://mgraefe.de/rpsb/version/features_1101.txt</featureUrl>
+//	   <featureUrl>https://github.com/irkanot/Pulse-Deck-TS3/releases</featureUrl>
 //   </product>
 // </versionDescription>
 
@@ -39,7 +39,7 @@
 #include "UpdaterWindow.h"
 #include "ConfigModel.h"
 
-#define CHECK_URL "https://api.github.com/repos/irkanot/RP-Soundboard-Irk-Fork/releases/latest"
+#define CHECK_URL "https://api.github.com/repos/irkanot/Pulse-Deck-TS3/releases/latest"
 
 
 std::string toStdStringUtf8(const QString& str)
@@ -146,7 +146,7 @@ void UpdateChecker::onFinishDownloadXml(QNetworkReply* reply)
 
 			if (m_explicitCheck)
 			{
-				QMessageBox::information(nullptr, "Update Check", "Your version of RP Soundboard Playlist is up to date.");
+				QMessageBox::information(nullptr, "Update Check", "Your version of Pulse Deck TS3 is up to date.");
 			}
 		}
 	}
@@ -184,7 +184,7 @@ void UpdateChecker::parseJson(QIODevice* device)
 	}
 
 	QJsonObject root = doc.object();
-	m_verInfo.productName = "rp_soundboard_playlist";
+	m_verInfo.productName = "pulse_deck_ts3";
 	m_verInfo.version = root.value("tag_name").toString();
 	m_verInfo.features = root.value("body").toString();
 
@@ -232,7 +232,7 @@ void UpdateChecker::parseXml(QIODevice* device)
 
 void UpdateChecker::parseProduct(QXmlStreamReader& xml)
 {
-	if (xml.attributes().value("descVersion") == "1" && xml.attributes().value("name") == "rp_soundboard")
+	if (xml.attributes().value("descVersion") == "1" && xml.attributes().value("name") == "pulse_deck_ts3")
 	{
 		m_verInfo.productName = xml.attributes().value("name").toString();
 		xml.readNext();
@@ -284,12 +284,12 @@ void UpdateChecker::askUserForUpdate()
 	QMessageBox msgBox0;
 	msgBox0.setTextFormat(Qt::RichText);
 	msgBox0.setText(QString(
-						"A new version of RP Soundboard Playlist is available (%1).<br /><br />"
+						"A new version of Pulse Deck TS3 is available (%1).<br /><br />"
 						"Would you like to download and install it?"
 	)
 						.arg(m_verInfo.version));
 	msgBox0.setIcon(QMessageBox::Information);
-	msgBox0.setWindowTitle("New version of RP Soundboard Playlist!");
+	msgBox0.setWindowTitle("New version of Pulse Deck TS3!");
 	msgBox0.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 	msgBox0.setDefaultButton(QMessageBox::Yes);
 	if (m_verInfo.features.length() > 0)
@@ -366,7 +366,7 @@ bool UpdateChecker::version_info_t::valid()
 
 QByteArray UpdateChecker::getUserAgent() // static
 {
-	return QByteArray("RP Soundboard Update Checker, ") + buildinfo_getPluginVersion();
+	return QByteArray("Pulse Deck TS3 Update Checker, ") + buildinfo_getPluginVersion();
 }
 
 
@@ -374,3 +374,4 @@ void UpdateChecker::setUserAgent(QNetworkRequest& request) // static
 {
 	request.setRawHeader("User-Agent", getUserAgent());
 }
+

@@ -1,9 +1,9 @@
-// src/main.cpp
+﻿// src/main.cpp
 //----------------------------------
-// RP Soundboard Source Code
-// Copyright (c) 2015 Marius Graefe
+// Pulse Deck TS3 Source Code
+// Copyright (c) 2015 Davide (Irkanot)
 // All rights reserved
-// Contact: rp_soundboard@mgraefe.de
+// Contact: support@pulse-deck-ts3.local
 //----------------------------------
 
 
@@ -131,7 +131,7 @@ void sb_enableInterface(bool enabled)
 			notConnectedBubble->setClosable(false);
 			notConnectedBubble->setText(
 				"You are not connected to a server.\n"
-				"RP Soundboard is disabled until you are connected properly."
+				"Pulse Deck TS3 is disabled until you are connected properly."
 			);
 			notConnectedBubble->attachTo(configDialog);
 			if (configDialog->isVisible())
@@ -150,7 +150,7 @@ void sb_enableInterface(bool enabled)
 void sb_init()
 {
 #ifdef _DEBUG
-	QMessageBox::information(nullptr, "", "rp soundboard plugin init, attach debugger now");
+	QMessageBox::information(nullptr, "", "pulse deck ts3 plugin init, attach debugger now");
 #endif
 
 	QTimer::singleShot(
@@ -459,3 +459,4 @@ void sb_disableHotkeysTemporarily(bool disable)
 {
 	hotkeysTemporarilyDisabled = disable;
 }
+

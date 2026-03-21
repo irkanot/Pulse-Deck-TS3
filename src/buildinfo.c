@@ -1,4 +1,4 @@
-
+﻿
 #include "buildinfo.h"
 #include "version/version.h"
 
@@ -30,7 +30,7 @@
 #define PLUGIN_DESCRIPTION ("Easy to use Soundboard.\n" \
 	"This software uses libraries from the FFmpeg project under the LGPLv2.1. " \
 	"A copy of the used source code along with the relevant configuration files " \
-	"can be downloaded here: https://github.com/MGraefe/RP-Soundboard")
+	"can be downloaded here: https://github.com/irkanot/Pulse-Deck-TS3")
 
 
 const char* buildinfo_getPluginVersion()
