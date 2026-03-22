@@ -1569,16 +1569,16 @@ void MainWindow::applyTheme(bool dark)
 	{
 		setStyleSheet(
 			"QMainWindow, QWidget { background-color: #151923; color: #e7ebf2; }"
-			"QGroupBox { border: 1px solid #30384a; border-radius: 8px; margin-top: 8px; padding-top: 8px; }"
-			"QGroupBox::title { color: #bfc8d8; subcontrol-origin: margin; left: 10px; padding: 0 4px; }"
-			"QPushButton { background-color: #273043; color: #f2f5fa; border: 1px solid #39455d; border-radius: 6px; padding: 5px 10px; }"
+			"QGroupBox { border: 1px solid #30384a; border-radius: 4px; margin-top: 6px; padding-top: 6px; }"
+			"QGroupBox::title { color: #bfc8d8; subcontrol-origin: margin; left: 8px; padding: 0 2px; }"
+			"QPushButton { background-color: #273043; color: #f2f5fa; border: 1px solid #39455d; border-radius: 0px; padding: 4px; min-height: 0px; }"
 			"QPushButton:hover { background-color: #31415c; border-color: #4d83ff; }"
 			"QPushButton:pressed { background-color: #25324a; }"
 			"QPushButton:disabled { background-color: #202635; color: #7f8aa0; border-color: #2f3749; }"
-			"QLineEdit, QListWidget, QComboBox, QSpinBox { background-color: #1f2533; color: #e7ebf2; border: 1px solid #344058; border-radius: 6px; padding: 4px; }"
+			"QLineEdit, QListWidget, QComboBox, QSpinBox { background-color: #1f2533; color: #e7ebf2; border: 1px solid #344058; border-radius: 0px; padding: 0px; }"
 			"QCheckBox, QRadioButton { color: #d7deea; }"
 			"QTabWidget::pane { border: 1px solid #30384a; }"
-			"QTabBar::tab { background: #222a3a; color: #bfc8d8; padding: 6px 10px; border: 1px solid #30384a; }"
+			"QTabBar::tab { background: #222a3a; color: #bfc8d8; padding: 4px 8px; border: 1px solid #30384a; }"
 			"QTabBar::tab:selected { background: #2f3d56; color: #f4f7fc; }"
 		);
 		ui->gridWidget->setStyleSheet(
@@ -1593,7 +1593,7 @@ void MainWindow::applyTheme(bool dark)
 			m_buttonBoxWindow->setStyleSheet(
 				"QWidget { background-color: #1b1f2a; color: #e8ecf3; }"
 				"QLabel { color: #cdd6e3; font-weight: 600; }"
-				"QPushButton { background-color: #2a3142; color: #f2f5fa; border: 1px solid #3a4358; border-radius: 6px; padding: 6px 10px; }"
+				"QPushButton { background-color: #2a3142; color: #f2f5fa; border: 1px solid #3a4358; border-radius: 0px; padding: 4px; min-height: 0px; }"
 				"QPushButton:hover { background-color: #33405a; border-color: #4d83ff; }"
 				"QPushButton:pressed { background-color: #26324a; }"
 				"QPushButton:disabled { background-color: #242938; color: #7f8aa0; border-color: #32384b; }"
