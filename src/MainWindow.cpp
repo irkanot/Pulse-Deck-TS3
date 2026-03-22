@@ -1569,10 +1569,8 @@ void MainWindow::applyTheme(bool dark)
 	{
 		setStyleSheet(
 			"QMainWindow, QWidget { background-color: #151923; color: #e7ebf2; }"
-			"QPushButton { background-color: #273043; color: #f2f5fa; }"
-			"QPushButton:hover { background-color: #31415c; }"
-			"QPushButton:pressed { background-color: #25324a; }"
-			"QPushButton:disabled { background-color: #202635; color: #7f8aa0; }"
+			"QPushButton { color: #111111; }"
+			"QPushButton:disabled { color: #7f8aa0; }"
 			"QLineEdit, QListWidget, QComboBox, QSpinBox { background-color: #1f2533; color: #e7ebf2; }"
 			"QCheckBox, QRadioButton, QLabel { color: #d7deea; }"
 			"QTabBar::tab { background: #222a3a; color: #bfc8d8; }"
