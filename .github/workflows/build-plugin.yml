@@ -3,7 +3,7 @@ name: Build Plugin Windows/Linux
 on:
   push:
     tags:
-      - v1.**
+      - 'v*'
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
