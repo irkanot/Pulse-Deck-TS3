@@ -1,5 +1,7 @@
 # Pulse Deck TS3 - Architecture Map
 
+> Derived from the original **RP Soundboard** plugin architecture, with Pulse Deck TS3 rebrand and incremental refactors.
+
 ## 1) Runtime flow (high level)
 
 1. TeamSpeak loads plugin DLL (`*_win32.dll` / `*_win64.dll`).

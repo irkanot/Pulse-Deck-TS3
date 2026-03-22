@@ -259,26 +259,26 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	loadPersistentPlaylist();
 	rebuildPlaylist();
 
+	setStyleSheet(
+		"QMainWindow, QWidget { background-color: #151923; color: #e7ebf2; }"
+		"QGroupBox { border: 1px solid #30384a; border-radius: 8px; margin-top: 8px; padding-top: 8px; }"
+		"QGroupBox::title { color: #bfc8d8; subcontrol-origin: margin; left: 10px; padding: 0 4px; }"
+		"QPushButton { background-color: #273043; color: #f2f5fa; border: 1px solid #39455d; border-radius: 6px; padding: 5px 10px; }"
+		"QPushButton:hover { background-color: #31415c; border-color: #4d83ff; }"
+		"QPushButton:pressed { background-color: #25324a; }"
+		"QPushButton:disabled { background-color: #202635; color: #7f8aa0; border-color: #2f3749; }"
+		"QLineEdit, QListWidget, QComboBox, QSpinBox { background-color: #1f2533; color: #e7ebf2; border: 1px solid #344058; border-radius: 6px; padding: 4px; }"
+		"QCheckBox, QRadioButton { color: #d7deea; }"
+		"QTabWidget::pane { border: 1px solid #30384a; }"
+		"QTabBar::tab { background: #222a3a; color: #bfc8d8; padding: 6px 10px; border: 1px solid #30384a; }"
+		"QTabBar::tab:selected { background: #2f3d56; color: #f4f7fc; }"
+	);
+
 	ui->gridWidget->setStyleSheet(
-		"QPushButton {"
-		"  padding: 4px;"
-		"  border: 1px solid rgb(173, 173, 173);"
-		"  color: black;"
-		"  background-color: rgb(225, 225, 225);"
-		"}"
-		"QPushButton:disabled {"
-		"  background-color: rgb(204, 204, 204);"
-		"  border-color: rgb(191, 191, 191);"
-		"  color: rgb(120, 120, 120);"
-		"}"
-		"QPushButton:hover {"
-		"  background-color: rgb(228, 239, 249);"
-		"  border-color: rgb(11, 123, 212);"
-		"}"
-		"QPushButton:pressed {"
-		"  background-color: rgb(204, 228, 247);"
-		"  border-color: rgb(0, 85, 155);"
-		"}"
+		"QPushButton { background-color: #2a3142; color: #f2f5fa; border: 1px solid #3a4358; border-radius: 6px; padding: 4px; }"
+		"QPushButton:hover { background-color: #33405a; border-color: #4d83ff; }"
+		"QPushButton:pressed { background-color: #26324a; }"
+		"QPushButton:disabled { background-color: #242938; color: #7f8aa0; border-color: #32384b; }"
 	);
 }
 

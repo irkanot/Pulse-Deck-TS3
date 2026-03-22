@@ -62,6 +62,16 @@ ButtonBoxWindow::ButtonBoxWindow(QWidget* parent) :
 	connect(m_colsMinus, SIGNAL(clicked()), this, SLOT(onColsMinus()));
 	connect(m_colsPlus, SIGNAL(clicked()), this, SLOT(onColsPlus()));
 
+	setMinimumSize(720, 420);
+	setStyleSheet(
+		"QWidget { background-color: #1b1f2a; color: #e8ecf3; }"
+		"QLabel { color: #cdd6e3; font-weight: 600; }"
+		"QPushButton { background-color: #2a3142; color: #f2f5fa; border: 1px solid #3a4358; border-radius: 6px; padding: 6px 10px; }"
+		"QPushButton:hover { background-color: #33405a; border-color: #4d83ff; }"
+		"QPushButton:pressed { background-color: #26324a; }"
+		"QPushButton:disabled { background-color: #242938; color: #7f8aa0; border-color: #32384b; }"
+	);
+
 	rebuildGrid();
 }
 

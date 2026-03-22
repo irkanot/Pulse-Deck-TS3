@@ -1,6 +1,8 @@
 # Pulse Deck TS3
 
-> This project is built entirely using **OpenClaw** and **ChatGPT**.
+> This project is built with **OpenClaw** and **ChatGPT**.
+>
+> **Important attribution:** Pulse Deck TS3 is based on the original **RP Soundboard** TeamSpeak plugin codebase and continues from that foundation with rebrand and incremental refactor work.
 
 **Pulse Deck TS3** is a standalone TeamSpeak 3 soundboard project focused on:
 
@@ -16,7 +18,13 @@
 ## Project status
 
 Pulse Deck TS3 is an active alpha rewrite/rebrand.
-The project started from an existing codebase, but it is now being moved to its own identity, naming, packaging, and roadmap.
+The project started from the **RP Soundboard** codebase, and is being moved to its own identity, naming, packaging, and roadmap.
+
+## Origin and attribution
+
+- Original project baseline: **RP Soundboard** (TeamSpeak plugin)
+- This repository keeps that functional lineage and evolves it under the **Pulse Deck TS3** identity.
+- Existing licenses/attributions from the original project and third-party dependencies (including FFmpeg) must remain intact.
 
 ---
 
@@ -84,6 +92,14 @@ cmake --build build --config Release --target INSTALL
 If `RPSB_MAKE_PLUGIN_FILE=ON` is enabled, a `.ts3_plugin` package is generated in the configured output folder.
 
 ---
+
+## Plugin identity (current)
+
+- Plugin visible name: `Pulse Deck TS3`
+- Command keyword: `pdeck`
+- 64-bit DLL name: `pulse_deck_ts3_win64.dll`
+- Package name pattern: `pulse_deck_ts3_<version>.ts3_plugin`
+- Current documented stage: `v0.0.2-alpha`
 
 ## Output naming (Pulse Deck TS3)
 
