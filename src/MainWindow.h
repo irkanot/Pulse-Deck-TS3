@@ -24,6 +24,9 @@
 #include <random>
 #include <QEvent>
 #include <QStringList>
+#include <QMap>
+#include <QProgressBar>
+#include <QElapsedTimer>
 
 #include "ui_MainWindow.h"
 #include "ConfigModel.h"
@@ -87,6 +90,7 @@ class MainWindow : public QWidget
 	void onPausePlayingSound();
 	void onUnpausePlayingSound();
 	void onPlayingIconTimer();
+	void onPlaylistProgressTimer();
 	void onUpdateShowHotkeysOnButtons(bool val);
 	void onUpdateHotkeysDisabled(bool val);
 	void onButtonFileDropped(const QList<QUrl>& urls);
@@ -110,6 +114,7 @@ class MainWindow : public QWidget
 	void onPlaylistRemoveFilesPressed();
 	void onPlaylistItemDoubleClicked(QListWidgetItem* item);
 	void onOpenButtonBoxPressed();
+	void onThemeTogglePressed();
 	void onButtonBoxPlayRequested(int buttonId);
 	void onButtonBoxContextRequested(int buttonId, QPoint globalPos);
 	void onButtonBoxFileDropped(int buttonId, QList<QUrl> urls);
@@ -142,6 +147,10 @@ class MainWindow : public QWidget
 	void loadPersistentPlaylist();
 	void savePersistentPlaylist();
 	QString playlistStorePath() const;
+	void applyTheme(bool dark);
+	void updatePlaylistProgressUi();
+	QString formatSeconds(qint64 totalSeconds) const;
+	qint64 estimateTrackDurationMs(const QString& filePath) const;
 
 	class ModelObserver : public ConfigModel::Observer
 	{
@@ -177,16 +186,32 @@ class MainWindow : public QWidget
 	QPushButton* m_playlistAddButton;
 	QPushButton* m_playlistRemoveButton;
 	QPushButton* m_openButtonBoxButton;
+	QPushButton* m_themeToggleButton;
 	QListWidget* m_playlistView;
 	ButtonBoxWindow* m_buttonBoxWindow;
+	struct PlaylistFileMeta
+	{
+		QString category;
+		QStringList tags;
+	};
+
 	QLabel* m_playlistNowLabel;
 	QLabel* m_playlistNextLabel;
+	QLabel* m_playlistElapsedLabel;
+	QLabel* m_playlistRemainingLabel;
+	QProgressBar* m_playlistProgressBar;
 	QStringList m_playlistFiles;
+	QMap<QString, PlaylistFileMeta> m_playlistMetaByPath;
 	std::vector<int> m_randomRemaining;
 	int m_playlistCurrentPos;
 	bool m_playlistRunning;
 	bool m_ignoreNextStopEvent;
 	bool m_playlistRandomMode;
+	QTimer* m_playlistProgressTimer;
+	QElapsedTimer m_playlistElapsedTimer;
+	qint64 m_playlistPausedMs;
+	qint64 m_playlistPauseStartedMs;
+	qint64 m_playlistCurrentDurationMs;
 	std::mt19937 m_rng;
 	std::array<QRadioButton*, NUM_CONFIGS> m_configRadioButtons;
 	std::array<QPushButton*, NUM_CONFIGS> m_configHotkeyButtons;

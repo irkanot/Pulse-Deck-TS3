@@ -19,9 +19,16 @@
 #include <QMimeData>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QFile>
 #include <QDir>
 #include <QStandardPaths>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QFormLayout>
+#include <QHBoxLayout>
 #include <algorithm>
 #include <random>
 
@@ -37,6 +44,7 @@
 #include "samples.h"
 #include "SoundButton.h"
 #include "ButtonBoxWindow.h"
+#include "inputfile.h"
 
 #ifdef _WIN32
 #include "Windows.h"
@@ -51,6 +59,61 @@ enum button_choices_e
 	BC_DELETE,
 };
 
+static QString normalizedPlaylistPath(const QString& p)
+{
+	return QFileInfo(p).absoluteFilePath().toLower();
+}
+
+struct PlaylistImportDialogResult
+{
+	QString category;
+	QStringList tags;
+	bool accepted = false;
+};
+
+static PlaylistImportDialogResult showPlaylistImportDialog(QWidget* parent)
+{
+	QDialog dialog(parent);
+	dialog.setWindowTitle("Playlist metadata");
+	QVBoxLayout* layout = new QVBoxLayout(&dialog);
+	QFormLayout* form = new QFormLayout();
+
+	QComboBox* categoryPreset = new QComboBox(&dialog);
+	categoryPreset->addItems({"", "Music", "Meme", "Voice", "SFX", "Ambient", "Custom"});
+	QLineEdit* categoryCustom = new QLineEdit(&dialog);
+	categoryCustom->setPlaceholderText("Optional custom category");
+	QLineEdit* tagsEdit = new QLineEdit(&dialog);
+	tagsEdit->setPlaceholderText("tag1, tag2, ...");
+
+	form->addRow("Category", categoryPreset);
+	form->addRow("Custom", categoryCustom);
+	form->addRow("Tags", tagsEdit);
+	layout->addLayout(form);
+
+	QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+	layout->addWidget(buttons);
+	QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+	QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+	PlaylistImportDialogResult result;
+	if (dialog.exec() != QDialog::Accepted)
+		return result;
+
+	QString preset = categoryPreset->currentText().trimmed();
+	QString custom = categoryCustom->text().trimmed();
+	if (!custom.isEmpty())
+		result.category = custom;
+	else if (!preset.isEmpty() && preset.compare("Custom", Qt::CaseInsensitive) != 0)
+		result.category = preset;
+
+	QStringList tags = tagsEdit->text().split(',', Qt::SkipEmptyParts);
+	for (QString& tag : tags)
+		tag = tag.trimmed();
+	tags.erase(std::remove_if(tags.begin(), tags.end(), [](const QString& t) { return t.isEmpty(); }), tags.end());
+	result.tags = tags;
+	result.accepted = true;
+	return result;
+}
 
 MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	QWidget(parent),
@@ -65,14 +128,22 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	m_playlistAddButton(nullptr),
 	m_playlistRemoveButton(nullptr),
 	m_openButtonBoxButton(nullptr),
+	m_themeToggleButton(nullptr),
 	m_playlistView(nullptr),
 	m_buttonBoxWindow(nullptr),
 	m_playlistNowLabel(nullptr),
 	m_playlistNextLabel(nullptr),
+	m_playlistElapsedLabel(nullptr),
+	m_playlistRemainingLabel(nullptr),
+	m_playlistProgressBar(nullptr),
 	m_playlistCurrentPos(-1),
 	m_playlistRunning(false),
 	m_ignoreNextStopEvent(false),
-	m_playlistRandomMode(false)
+	m_playlistRandomMode(false),
+	m_playlistProgressTimer(nullptr),
+	m_playlistPausedMs(0),
+	m_playlistPauseStartedMs(-1),
+	m_playlistCurrentDurationMs(0)
 {
 	/* Ensure resources are loaded */
 	Q_INIT_RESOURCE(qtres);
@@ -130,6 +201,8 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	m_playlistRemoveButton->setToolTip("Remove selected songs from playlist");
 	m_openButtonBoxButton = new QPushButton("ButtonBox", this);
 	m_openButtonBoxButton->setToolTip("Open detached ButtonBox window");
+	m_themeToggleButton = new QPushButton(this);
+	m_themeToggleButton->setToolTip("Switch between original light theme and dark theme");
 	ui->horizontalLayout_4->insertWidget(0, m_playlistPrevButton);
 	ui->horizontalLayout_4->insertWidget(1, m_playlistStartButton);
 	ui->horizontalLayout_4->insertWidget(2, m_playlistNextButton);
@@ -137,6 +210,7 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	ui->horizontalLayout_4->insertWidget(4, m_playlistAddButton);
 	ui->horizontalLayout_4->insertWidget(5, m_playlistRemoveButton);
 	ui->horizontalLayout_4->insertWidget(6, m_openButtonBoxButton);
+	ui->horizontalLayout_4->insertWidget(7, m_themeToggleButton);
 
 	QWidget* playlistWidget = new QWidget(this);
 	QVBoxLayout* playlistLayout = new QVBoxLayout(playlistWidget);
@@ -144,6 +218,17 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	playlistLayout->setSpacing(3);
 	m_playlistNowLabel = new QLabel("Now: -", playlistWidget);
 	m_playlistNextLabel = new QLabel("Next: -", playlistWidget);
+	m_playlistProgressBar = new QProgressBar(playlistWidget);
+	m_playlistProgressBar->setRange(0, 1000);
+	m_playlistProgressBar->setValue(0);
+	m_playlistProgressBar->setTextVisible(false);
+	m_playlistElapsedLabel = new QLabel("0:00", playlistWidget);
+	m_playlistRemainingLabel = new QLabel("-0:00", playlistWidget);
+	QHBoxLayout* playlistTimeLayout = new QHBoxLayout();
+	playlistTimeLayout->setContentsMargins(0, 0, 0, 0);
+	playlistTimeLayout->addWidget(m_playlistElapsedLabel);
+	playlistTimeLayout->addStretch();
+	playlistTimeLayout->addWidget(m_playlistRemainingLabel);
 	m_playlistView = new QListWidget(playlistWidget);
 	m_playlistView->setMinimumHeight(110);
 	m_playlistView->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -153,6 +238,8 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	m_playlistView->viewport()->installEventFilter(this);
 	playlistLayout->addWidget(m_playlistNowLabel);
 	playlistLayout->addWidget(m_playlistNextLabel);
+	playlistLayout->addWidget(m_playlistProgressBar);
+	playlistLayout->addLayout(playlistTimeLayout);
 	playlistLayout->addWidget(m_playlistView);
 	layout()->addWidget(playlistWidget);
 
@@ -180,6 +267,7 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	connect(m_playlistAddButton, SIGNAL(clicked()), this, SLOT(onPlaylistAddFilesPressed()));
 	connect(m_playlistRemoveButton, SIGNAL(clicked()), this, SLOT(onPlaylistRemoveFilesPressed()));
 	connect(m_openButtonBoxButton, SIGNAL(clicked()), this, SLOT(onOpenButtonBoxPressed()));
+	connect(m_themeToggleButton, SIGNAL(clicked()), this, SLOT(onThemeTogglePressed()));
 	connect(m_playlistView, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(onPlaylistItemDoubleClicked(QListWidgetItem*)));
 	connect(
 		ui->b_pause, SIGNAL(customContextMenuRequested(const QPoint&)), this,
@@ -234,6 +322,9 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	playingIconTimer = new QTimer(this);
 	playingIconTimer->setInterval(150);
 	connect(playingIconTimer, SIGNAL(timeout()), this, SLOT(onPlayingIconTimer()));
+	m_playlistProgressTimer = new QTimer(this);
+	m_playlistProgressTimer->setInterval(250);
+	connect(m_playlistProgressTimer, SIGNAL(timeout()), this, SLOT(onPlaylistProgressTimer()));
 
 	Sampler* sampler = sb_getSampler();
 	connect(
@@ -259,27 +350,7 @@ MainWindow::MainWindow(ConfigModel* model, QWidget* parent /*= 0*/) :
 	loadPersistentPlaylist();
 	rebuildPlaylist();
 
-	setStyleSheet(
-		"QMainWindow, QWidget { background-color: #151923; color: #e7ebf2; }"
-		"QGroupBox { border: 1px solid #30384a; border-radius: 8px; margin-top: 8px; padding-top: 8px; }"
-		"QGroupBox::title { color: #bfc8d8; subcontrol-origin: margin; left: 10px; padding: 0 4px; }"
-		"QPushButton { background-color: #273043; color: #f2f5fa; border: 1px solid #39455d; border-radius: 6px; padding: 5px 10px; }"
-		"QPushButton:hover { background-color: #31415c; border-color: #4d83ff; }"
-		"QPushButton:pressed { background-color: #25324a; }"
-		"QPushButton:disabled { background-color: #202635; color: #7f8aa0; border-color: #2f3749; }"
-		"QLineEdit, QListWidget, QComboBox, QSpinBox { background-color: #1f2533; color: #e7ebf2; border: 1px solid #344058; border-radius: 6px; padding: 4px; }"
-		"QCheckBox, QRadioButton { color: #d7deea; }"
-		"QTabWidget::pane { border: 1px solid #30384a; }"
-		"QTabBar::tab { background: #222a3a; color: #bfc8d8; padding: 6px 10px; border: 1px solid #30384a; }"
-		"QTabBar::tab:selected { background: #2f3d56; color: #f4f7fc; }"
-	);
-
-	ui->gridWidget->setStyleSheet(
-		"QPushButton { background-color: #2a3142; color: #f2f5fa; border: 1px solid #3a4358; border-radius: 6px; padding: 4px; }"
-		"QPushButton:hover { background-color: #33405a; border-color: #4d83ff; }"
-		"QPushButton:pressed { background-color: #26324a; }"
-		"QPushButton:disabled { background-color: #242938; color: #7f8aa0; border-color: #32384b; }"
-	);
+	applyTheme(m_model->getDarkThemeEnabled());
 }
 
 void MainWindow::setConfiguration(int cfg)
@@ -355,6 +426,11 @@ void MainWindow::onClickedPlay()
 void MainWindow::onClickedStop()
 {
 	m_playlistRunning = false;
+	m_playlistCurrentDurationMs = 0;
+	m_playlistPausedMs = 0;
+	m_playlistPauseStartedMs = -1;
+	if (m_playlistProgressTimer)
+		m_playlistProgressTimer->stop();
 	sb_stopPlayback();
 	refreshPlaylistUi();
 }
@@ -600,8 +676,19 @@ void MainWindow::rebuildPlaylist()
 
 	for (int i = 0; i < m_playlistFiles.size(); ++i)
 	{
+		const QString filePath = m_playlistFiles[i];
+		const QString key = normalizedPlaylistPath(filePath);
+		const PlaylistFileMeta meta = m_playlistMetaByPath.value(key);
+		QString label = QString("%1. %2").arg(i + 1).arg(QFileInfo(filePath).baseName());
+		if (!meta.category.isEmpty())
+			label += QString(" [%1]").arg(meta.category);
+		if (!meta.tags.isEmpty())
+			label += QString(" {%1}").arg(meta.tags.join(", "));
 		if (m_playlistView)
-			m_playlistView->addItem(QString("%1. %2").arg(i + 1).arg(QFileInfo(m_playlistFiles[i]).baseName()));
+		{
+			QListWidgetItem* item = new QListWidgetItem(label, m_playlistView);
+			item->setToolTip(filePath);
+		}
 	}
 
 	if (m_playlistFiles.isEmpty())
@@ -628,6 +715,7 @@ void MainWindow::refreshPlaylistUi()
 		m_playlistNextLabel->setText("Next: -");
 		if (m_playlistStartButton)
 			m_playlistStartButton->setText("â–¶ Playlist");
+		updatePlaylistProgressUi();
 		return;
 	}
 
@@ -644,6 +732,65 @@ void MainWindow::refreshPlaylistUi()
 		m_playlistStartButton->setText(m_playlistRunning ? "â–  Playlist" : "â–¶ Playlist");
 	if (m_playlistRandomButton)
 		m_playlistRandomButton->setText(m_playlistRandomMode ? "Random ON" : "Random OFF");
+	updatePlaylistProgressUi();
+}
+
+QString MainWindow::formatSeconds(qint64 totalSeconds) const
+{
+	if (totalSeconds < 0)
+		totalSeconds = 0;
+	qint64 minutes = totalSeconds / 60;
+	qint64 seconds = totalSeconds % 60;
+	return QString("%1:%2").arg(minutes).arg(seconds, 2, 10, QChar('0'));
+}
+
+qint64 MainWindow::estimateTrackDurationMs(const QString& filePath) const
+{
+	InputFile* input = CreateInputFileFFmpeg();
+	if (!input)
+		return 0;
+	qint64 result = 0;
+	if (input->open(filePath.toUtf8().constData()) == 0)
+	{
+		const int64_t samples = input->outputSamplesEstimation();
+		if (samples > 0)
+			result = (samples * 1000) / 48000;
+		input->close();
+	}
+	delete input;
+	return result;
+}
+
+void MainWindow::updatePlaylistProgressUi()
+{
+	if (!m_playlistProgressBar || !m_playlistElapsedLabel || !m_playlistRemainingLabel)
+		return;
+
+	if (m_playlistCurrentDurationMs <= 0 || (!m_playlistRunning && m_playlistPauseStartedMs < 0))
+	{
+		m_playlistProgressBar->setValue(0);
+		m_playlistElapsedLabel->setText("0:00");
+		m_playlistRemainingLabel->setText("-0:00");
+		return;
+	}
+
+	qint64 elapsedMs = m_playlistPausedMs;
+	if (m_playlistElapsedTimer.isValid())
+		elapsedMs += m_playlistElapsedTimer.elapsed();
+	if (m_playlistPauseStartedMs >= 0)
+		elapsedMs = m_playlistPauseStartedMs;
+
+	elapsedMs = (std::max<qint64>)(0, (std::min<qint64>)(elapsedMs, m_playlistCurrentDurationMs));
+	qint64 remainingMs = (std::max<qint64>)(0, m_playlistCurrentDurationMs - elapsedMs);
+	int barValue = (m_playlistCurrentDurationMs > 0) ? (int)((elapsedMs * 1000) / m_playlistCurrentDurationMs) : 0;
+	m_playlistProgressBar->setValue((std::max<int>)(0, (std::min<int>)(1000, barValue)));
+	m_playlistElapsedLabel->setText(formatSeconds(elapsedMs / 1000));
+	m_playlistRemainingLabel->setText(QString("-%1").arg(formatSeconds(remainingMs / 1000)));
+}
+
+void MainWindow::onPlaylistProgressTimer()
+{
+	updatePlaylistProgressUi();
 }
 
 void MainWindow::playPlaylistPosition(int pos)
@@ -658,6 +805,12 @@ void MainWindow::playPlaylistPosition(int pos)
 	m_ignoreNextStopEvent = true;
 	sb_playFile(info);
 	m_playlistRunning = true;
+	m_playlistCurrentDurationMs = estimateTrackDurationMs(info.filename);
+	m_playlistPausedMs = 0;
+	m_playlistPauseStartedMs = -1;
+	m_playlistElapsedTimer.restart();
+	if (m_playlistProgressTimer)
+		m_playlistProgressTimer->start();
 	refreshPlaylistUi();
 }
 
@@ -671,6 +824,11 @@ void MainWindow::playlistStart()
 	if (m_playlistRunning)
 	{
 		m_playlistRunning = false;
+		m_playlistCurrentDurationMs = 0;
+		m_playlistPausedMs = 0;
+		m_playlistPauseStartedMs = -1;
+		if (m_playlistProgressTimer)
+			m_playlistProgressTimer->stop();
 		sb_stopPlayback();
 		refreshPlaylistUi();
 		return;
@@ -741,6 +899,10 @@ void MainWindow::addFilesToPlaylist(const QStringList& files)
 	if (files.isEmpty())
 		return;
 
+	PlaylistImportDialogResult metaResult = showPlaylistImportDialog(this);
+	if (!metaResult.accepted)
+		return;
+
 	int added = 0;
 	for (const QString& f : files)
 	{
@@ -753,6 +915,10 @@ void MainWindow::addFilesToPlaylist(const QStringList& files)
 			m_playlistFiles << abs;
 			added++;
 		}
+
+		PlaylistFileMeta& meta = m_playlistMetaByPath[normalizedPlaylistPath(abs)];
+		meta.category = metaResult.category;
+		meta.tags = metaResult.tags;
 	}
 
 	if (added > 0)
@@ -810,6 +976,7 @@ QString MainWindow::playlistStorePath() const
 void MainWindow::loadPersistentPlaylist()
 {
 	m_playlistFiles.clear();
+	m_playlistMetaByPath.clear();
 	QFile f(playlistStorePath());
 	if (!f.exists())
 		return;
@@ -817,24 +984,72 @@ void MainWindow::loadPersistentPlaylist()
 		return;
 	QJsonParseError e;
 	QJsonDocument d = QJsonDocument::fromJson(f.readAll(), &e);
-	if (e.error != QJsonParseError::NoError || !d.isArray())
+	if (e.error != QJsonParseError::NoError)
 		return;
-	for (const auto& v : d.array())
+
+	if (d.isArray())
 	{
-		QString p = v.toString();
-		if (!p.isEmpty())
-			m_playlistFiles << p;
+		for (const auto& v : d.array())
+		{
+			QString p = v.toString();
+			if (!p.isEmpty())
+				m_playlistFiles << p;
+		}
+		return;
+	}
+
+	if (!d.isObject())
+		return;
+	QJsonObject root = d.object();
+	QJsonArray files = root.value("files").toArray();
+	for (const auto& v : files)
+	{
+		if (!v.isObject())
+			continue;
+		QJsonObject obj = v.toObject();
+		QString path = obj.value("path").toString();
+		if (path.isEmpty())
+			continue;
+		m_playlistFiles << path;
+
+		PlaylistFileMeta meta;
+		meta.category = obj.value("category").toString().trimmed();
+		for (const QJsonValue& tag : obj.value("tags").toArray())
+		{
+			QString t = tag.toString().trimmed();
+			if (!t.isEmpty())
+				meta.tags << t;
+		}
+		if (!meta.category.isEmpty() || !meta.tags.isEmpty())
+			m_playlistMetaByPath.insert(normalizedPlaylistPath(path), meta);
 	}
 }
 
 void MainWindow::savePersistentPlaylist()
 {
-	QJsonArray arr;
+	QJsonArray files;
 	for (const QString& p : m_playlistFiles)
-		arr.append(p);
+	{
+		QJsonObject item;
+		item.insert("path", p);
+		const PlaylistFileMeta meta = m_playlistMetaByPath.value(normalizedPlaylistPath(p));
+		if (!meta.category.isEmpty())
+			item.insert("category", meta.category);
+		if (!meta.tags.isEmpty())
+		{
+			QJsonArray tags;
+			for (const QString& t : meta.tags)
+				tags.append(t);
+			item.insert("tags", tags);
+		}
+		files.append(item);
+	}
+	QJsonObject root;
+	root.insert("version", 2);
+	root.insert("files", files);
 	QFile f(playlistStorePath());
 	if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-		f.write(QJsonDocument(arr).toJson(QJsonDocument::Compact));
+		f.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
 
 void MainWindow::chooseFile(size_t buttonId)
@@ -956,6 +1171,15 @@ void MainWindow::onStartPlayingSound(bool preview, QString filename)
 	ui->b_stop->setEnabled(true);
 	ui->b_pause->setEnabled(true);
 	ui->b_pause->setIcon(m_pauseIcon);
+	if (!m_playlistRunning)
+	{
+		m_playlistCurrentDurationMs = 0;
+		m_playlistPausedMs = 0;
+		m_playlistPauseStartedMs = -1;
+		if (m_playlistProgressTimer)
+			m_playlistProgressTimer->stop();
+		updatePlaylistProgressUi();
+	}
 }
 
 
@@ -984,6 +1208,11 @@ void MainWindow::onStopPlayingSound()
 	}
 	else
 	{
+		m_playlistCurrentDurationMs = 0;
+		m_playlistPausedMs = 0;
+		m_playlistPauseStartedMs = -1;
+		if (m_playlistProgressTimer)
+			m_playlistProgressTimer->stop();
 		refreshPlaylistUi();
 	}
 }
@@ -993,6 +1222,9 @@ void MainWindow::onPausePlayingSound()
 {
 	playingIconTimer->stop();
 	ui->b_pause->setIcon(m_playIcon);
+	if (m_playlistElapsedTimer.isValid() && m_playlistPauseStartedMs < 0)
+		m_playlistPauseStartedMs = m_playlistPausedMs + m_playlistElapsedTimer.elapsed();
+	updatePlaylistProgressUi();
 }
 
 
@@ -1000,6 +1232,13 @@ void MainWindow::onUnpausePlayingSound()
 {
 	playingIconTimer->start();
 	ui->b_pause->setIcon(m_pauseIcon);
+	if (m_playlistPauseStartedMs >= 0)
+	{
+		m_playlistPausedMs = m_playlistPauseStartedMs;
+		m_playlistPauseStartedMs = -1;
+		m_playlistElapsedTimer.restart();
+	}
+	updatePlaylistProgressUi();
 }
 
 
@@ -1254,7 +1493,9 @@ void MainWindow::onPlaylistRemoveFilesPressed()
 			removedCurrent = true;
 		else if (row < m_playlistCurrentPos)
 			m_playlistCurrentPos--;
+		const QString removedPath = m_playlistFiles[row];
 		m_playlistFiles.removeAt(row);
+		m_playlistMetaByPath.remove(normalizedPlaylistPath(removedPath));
 	}
 
 	if (m_playlistFiles.isEmpty())
@@ -1316,9 +1557,84 @@ void MainWindow::onOpenButtonBoxPressed()
 		m_buttonBoxWindow->setButtonColor(i, info ? info->customColor : QColor(0, 0, 0, 0));
 	}
 
+	applyTheme(m_model->getDarkThemeEnabled());
 	m_buttonBoxWindow->show();
 	m_buttonBoxWindow->raise();
 	m_buttonBoxWindow->activateWindow();
+}
+
+void MainWindow::applyTheme(bool dark)
+{
+	if (dark)
+	{
+		setStyleSheet(
+			"QMainWindow, QWidget { background-color: #151923; color: #e7ebf2; }"
+			"QGroupBox { border: 1px solid #30384a; border-radius: 8px; margin-top: 8px; padding-top: 8px; }"
+			"QGroupBox::title { color: #bfc8d8; subcontrol-origin: margin; left: 10px; padding: 0 4px; }"
+			"QPushButton { background-color: #273043; color: #f2f5fa; border: 1px solid #39455d; border-radius: 6px; padding: 5px 10px; }"
+			"QPushButton:hover { background-color: #31415c; border-color: #4d83ff; }"
+			"QPushButton:pressed { background-color: #25324a; }"
+			"QPushButton:disabled { background-color: #202635; color: #7f8aa0; border-color: #2f3749; }"
+			"QLineEdit, QListWidget, QComboBox, QSpinBox { background-color: #1f2533; color: #e7ebf2; border: 1px solid #344058; border-radius: 6px; padding: 4px; }"
+			"QCheckBox, QRadioButton { color: #d7deea; }"
+			"QTabWidget::pane { border: 1px solid #30384a; }"
+			"QTabBar::tab { background: #222a3a; color: #bfc8d8; padding: 6px 10px; border: 1px solid #30384a; }"
+			"QTabBar::tab:selected { background: #2f3d56; color: #f4f7fc; }"
+		);
+		ui->gridWidget->setStyleSheet(
+			"QPushButton { background-color: #2a3142; color: #f2f5fa; border: 1px solid #3a4358; border-radius: 6px; padding: 4px; }"
+			"QPushButton:hover { background-color: #33405a; border-color: #4d83ff; }"
+			"QPushButton:pressed { background-color: #26324a; }"
+			"QPushButton:disabled { background-color: #242938; color: #7f8aa0; border-color: #32384b; }"
+		);
+		if (m_themeToggleButton)
+			m_themeToggleButton->setText("Tema: Scuro");
+		if (m_buttonBoxWindow)
+			m_buttonBoxWindow->setStyleSheet(
+				"QWidget { background-color: #1b1f2a; color: #e8ecf3; }"
+				"QLabel { color: #cdd6e3; font-weight: 600; }"
+				"QPushButton { background-color: #2a3142; color: #f2f5fa; border: 1px solid #3a4358; border-radius: 6px; padding: 6px 10px; }"
+				"QPushButton:hover { background-color: #33405a; border-color: #4d83ff; }"
+				"QPushButton:pressed { background-color: #26324a; }"
+				"QPushButton:disabled { background-color: #242938; color: #7f8aa0; border-color: #32384b; }"
+			);
+	}
+	else
+	{
+		setStyleSheet("");
+		ui->gridWidget->setStyleSheet(
+			"QPushButton {"
+			"  padding: 4px;"
+			"  border: 1px solid rgb(173, 173, 173);"
+			"  color: black;"
+			"  background-color: rgb(225, 225, 225);"
+			"}"
+			"QPushButton:disabled {"
+			"  background-color: rgb(204, 204, 204);"
+			"  border-color: rgb(191, 191, 191);"
+			"  color: rgb(120, 120, 120);"
+			"}"
+			"QPushButton:hover {"
+			"  background-color: rgb(228, 239, 249);"
+			"  border-color: rgb(11, 123, 212);"
+			"}"
+			"QPushButton:pressed {"
+			"  background-color: rgb(204, 228, 247);"
+			"  border-color: rgb(0, 85, 155);"
+			"}"
+		);
+		if (m_themeToggleButton)
+			m_themeToggleButton->setText("Tema: Chiaro");
+		if (m_buttonBoxWindow)
+			m_buttonBoxWindow->setStyleSheet("");
+	}
+}
+
+void MainWindow::onThemeTogglePressed()
+{
+	const bool nextDark = !m_model->getDarkThemeEnabled();
+	m_model->setDarkThemeEnabled(nextDark);
+	applyTheme(nextDark);
 }
 
 void MainWindow::onButtonBoxPlayRequested(int buttonId)
@@ -1523,6 +1839,9 @@ void MainWindow::ModelObserver::notify(ConfigModel& model, ConfigModel::notifica
 	case ConfigModel::NOTIFY_SET_HOTKEYS_ENABLED:
 		if (p.ui->cb_disable_hotkeys->isChecked() == model.getHotkeysEnabled())
 			p.ui->cb_disable_hotkeys->setChecked(!model.getHotkeysEnabled());
+		break;
+	case ConfigModel::NOTIFY_SET_DARK_THEME_ENABLED:
+		p.applyTheme(model.getDarkThemeEnabled());
 		break;
 	default:
 		break;

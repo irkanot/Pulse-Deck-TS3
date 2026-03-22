@@ -34,6 +34,7 @@ ConfigModel::ConfigModel()
 
 	m_showHotkeysOnButtons = false;
 	m_hotkeysEnabled = true;
+	m_darkThemeEnabled = false;
 
 	m_activeConfig = 0;
 	m_nextUpdateCheck = 0;
@@ -74,6 +75,7 @@ void ConfigModel::readConfig(const QString& file)
 	m_bubbleColsBuild = settings.value("bubble_cols_build", 0).toInt();
 	m_showHotkeysOnButtons = settings.value("show_hotkeys_on_buttons", false).toBool();
 	m_hotkeysEnabled = settings.value("hotkeys_enabled", true).toBool();
+	m_darkThemeEnabled = settings.value("dark_theme_enabled", false).toBool();
 	m_nextUpdateCheck = settings.value("next_update_check", 0).toUInt();
 
 	notifyAllEvents();
@@ -101,6 +103,7 @@ void ConfigModel::writeConfig(const QString& file)
 	settings.setValue("bubble_cols_build", m_bubbleColsBuild);
 	settings.setValue("show_hotkeys_on_buttons", m_showHotkeysOnButtons);
 	settings.setValue("hotkeys_enabled", m_hotkeysEnabled);
+	settings.setValue("dark_theme_enabled", m_darkThemeEnabled);
 	settings.setValue("next_update_check", m_nextUpdateCheck);
 
 	for (int i = 0; i < NUM_CONFIGS; i++)
@@ -299,6 +302,13 @@ void ConfigModel::setHotkeysEnabled(bool enabled)
 	notify(NOTIFY_SET_HOTKEYS_ENABLED, enabled ? 1 : 0);
 }
 
+void ConfigModel::setDarkThemeEnabled(bool enabled)
+{
+	m_darkThemeEnabled = enabled;
+	writeConfig();
+	notify(NOTIFY_SET_DARK_THEME_ENABLED, enabled ? 1 : 0);
+}
+
 
 void ConfigModel::addObserver(Observer* obs)
 {
@@ -378,6 +388,7 @@ void ConfigModel::notifyAllEvents()
 	notify(NOTIFY_SET_BUBBLE_COLS_BUILD, m_bubbleColsBuild);
 	notify(NOTIFY_SET_SHOW_HOTKEYS_ON_BUTTONS, m_showHotkeysOnButtons);
 	notify(NOTIFY_SET_HOTKEYS_ENABLED, m_hotkeysEnabled);
+	notify(NOTIFY_SET_DARK_THEME_ENABLED, m_darkThemeEnabled);
 }
 
 

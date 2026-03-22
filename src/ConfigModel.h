@@ -36,6 +36,7 @@ class ConfigModel
 		NOTIFY_SET_SHOW_HOTKEYS_ON_BUTTONS,
 		NOTIFY_SET_HOTKEYS_ENABLED,
 		NOTIFY_SET_NEXT_UPDATE_CHECK,
+		NOTIFY_SET_DARK_THEME_ENABLED,
 	};
 
 	class Observer
@@ -131,6 +132,12 @@ class ConfigModel
 	}
 	void setHotkeysEnabled(bool enabled);
 
+	inline bool getDarkThemeEnabled() const
+	{
+		return m_darkThemeEnabled;
+	}
+	void setDarkThemeEnabled(bool enabled);
+
 	void addObserver(Observer* obs);
 	void remObserver(Observer* obs);
 
@@ -181,6 +188,7 @@ class ConfigModel
 
 	bool m_showHotkeysOnButtons;
 	bool m_hotkeysEnabled;
+	bool m_darkThemeEnabled;
 
 	uint m_nextUpdateCheck;
 };
